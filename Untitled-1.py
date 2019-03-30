@@ -108,7 +108,13 @@ class FrameInputCapture:
                 print('Started recording...')
             if keyboard.is_pressed('o') and self.recording:
                 self.recording = False
+                print('Saving recording...')
                 self.flush_buffer()
+                print('Saved.')
+            if keyboard.is_pressed('k') and self.recording:
+                self.recording = False
+                self.frames = []
+                print('Recording discarded.')
             if keyboard.is_pressed('~'):
                 self.cheat_code('RAPIDGT')
 
