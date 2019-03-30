@@ -4,6 +4,7 @@ gta5train/
 tmp*/
 *.py[cod]
 *$py.class
+*.pt
 
 # C extensions
 *.so
