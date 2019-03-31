@@ -19,7 +19,7 @@ class gta5Loader(data.Dataset):
             with open(filename) as f:
                 for line in f.readlines():
                     split_line = line[:-1].split('\t')
-                    labels[split_line[0]] = [(float(x)+1)/2 for x in split_line[1:]]
+                    labels[split_line[0]] = [float(x) for x in split_line[1:]]
         for filename in glob.glob(self.root + '*.jpg'):
             self.images.append((filename, labels[filename[len(self.root):]]))
 

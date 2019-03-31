@@ -45,14 +45,14 @@ class Alexnet(nn.Module):
         self.classifier = nn.Sequential(
             nn.Dropout(),
             nn.Linear(256 * 6 * 6, 4096),
-            nn.ReLU(inplace=True),
+            nn.Tanh(),
             nn.Dropout(),
             nn.Linear(4096, 4096),
-            nn.ReLU(inplace=True),
+            nn.Tanh(),
             nn.Linear(4096, 3),
-            nn.Sigmoid(),
+            nn.Tanh(),
         )
-        self.loss = nn.BCELoss()
+        self.loss = nn.SmoothL1Loss()
         self.optimizer = Adam(self.parameters(), lr = self.learning_rate)
 
 
@@ -68,7 +68,7 @@ class Alexnet(nn.Module):
         # variables to change
         stopping_epoch = 100
         stopping_val_acc = 1.00
-        mini_batches_per_print = len(self.train_loader)//10
+        mini_batches_per_print = len(self.train_loader)//100
         mini_batches_per_val = len(self.train_loader)//10
 
         start_time = time.time()
@@ -108,8 +108,8 @@ class Alexnet(nn.Module):
                     print(prediction[0], target[0])
                     print(prediction[1], target[1])
                     print(prediction[2], target[2])
-                    torch.save(self.state_dict(), './saved.pt')
-
+                
+            torch.save(self.state_dict(), './saved.pt')
             epochs += 1
         print('training time: ', time.time()-start_time)
         plt.plot([x*self.batch_size*mini_batches_per_print for x in range(len(loss_list))], loss_list)
@@ -141,7 +141,7 @@ class Alexnet(nn.Module):
 
 if __name__ == "__main__":
     a = Alexnet()
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
     print('device:', device)
     a = a.to(device)
     a.train(device)

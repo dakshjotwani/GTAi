@@ -70,7 +70,7 @@ class FrameInputCapture:
         control_labels = ''
         for i, n in enumerate(self.frames[:-self.fraps*2]): #remove last two seconds
             filename = cur_time + '--' + str(i) + '.jpg'
-            cv2.imwrite('./gta5train/' + filename, n[0], [cv2.IMWRITE_JPEG_QUALITY, 60])
+            cv2.imwrite('./gta5train/' + filename, n[0])
             control_labels += filename + '\t' + '\t'.join(map(str, n[1])) + '\n'
         
         with open('./gta5train/' + cur_time + '.txt', 'w') as f:
@@ -96,6 +96,8 @@ class FrameInputCapture:
         gas = -1.0
         brake = -1.0
 
+        num_straight = 10
+
         while True:
             start = time.time()
             # Get frame
@@ -110,6 +112,7 @@ class FrameInputCapture:
                 self.recording = False
                 print('Saving recording...')
                 self.flush_buffer()
+                num_straight = 10
                 print('Saved.')
             if keyboard.is_pressed('k') and self.recording:
                 self.recording = False
@@ -123,7 +126,15 @@ class FrameInputCapture:
             gas = ctlr.get_axis(4)
             brake = ctlr.get_axis(5)
 
-            self.save_to_buffer(img, np.array([turn, gas, brake], dtype=np.float16))
+            # Data balancer: Only save interesting frames
+            if (turn > 0.2 or turn < -0.2) or (brake > -0.4):
+                self.save_to_buffer(img, np.array([turn, gas, brake], dtype=np.float16))
+                num_straight += 1
+            
+            # and sometimes save straight frames
+            elif num_straight > 0:
+                self.save_to_buffer(img, np.array([turn, gas, brake], dtype=np.float16))
+                num_straight -= 3
 
             # cv2 bs
             self.put_turn_text(img, turn)
