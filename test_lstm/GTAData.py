@@ -8,14 +8,15 @@ import glob
 Adapted from https://discuss.pytorch.org/t/how-upload-sequence-of-image-on-video-classification/24865/9
 '''
 class SequenceSampler(torch.utils.data.Sampler):
-    def __init__(self, end_len, seq_length):
-        end_len = [0, *end_len]
+    def __init__(self, lengths, seq_length):
+        lengths = [0, *lengths]
         indices = []
         
-        for i in range(len(end_len) - 1):
-            start = end_len[i]
-            end = end_len[i+1] - seq_length
-            indices.append(torch.arange(start, end + 1))
+        for i in range(len(lengths) - 1):
+            start = lengths[i]
+            end = lengths[i+1] - seq_length
+            if start < end:
+                indices.append(torch.arange(start, end + 1))
         
         self.indices = torch.cat(indices)
     
@@ -41,13 +42,14 @@ class GTASequenceDataset(Dataset):
                     split_line = line[:-1].split('\t')
                     sample_path = split_line[0]
                     target = torch.Tensor([float(x) for x in split_line[1:]])
-                    self.images.append((sample_path, target))
+                    self.images.append((root + sample_path, target))
 
             self.end_len.append(len(self.images))
 
     def __getitem__(self, index):
         start = index
         end = index + self.seq_length
+
         images = []
         targets = []
         for i in range(start, end):
