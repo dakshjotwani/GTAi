@@ -73,16 +73,20 @@ class gta5Loader(data.Dataset):
         return fmt_str
 
 # import os
-# root = './gta5train/'
-# root = './tmp/'
-# for n in glob.glob(root + '*.txt'):
-#     name = n[len(root):][:-4]
-#     print(name)
+# root = 'D:/gta5train/'
+# img_names = [n[len(root):] for n in glob.glob(root + '*.jpg')]
+# txts = [n[len(root):] for n in glob.glob(root + '*.txt')]
+# # root = './tmp/'
+# for txt in txts:
+#     name = txt[:-4]
+#     # print(name)
 #     folder = root + name
-#     os.mkdir(root + name)
-#     for jpg in glob.glob(root + '*.jpg'):
-#         print(jpg, folder + '/' + jpg[len(root):])
-#         # os.rename(jpg, folder + '/' + jpg[len(root):])
-#     # os.rename(n, folder + '/' + n[len(root):])
-#     print(n, folder + '/' + n[len(root):])
-#     break
+#     os.mkdir(folder)
+#     for jpg in img_names:
+#         if not jpg.startswith(name):
+#             continue
+#         # print(root + jpg, folder + '/' + jpg)
+#         os.rename(root + jpg, folder + '/' + jpg)
+#     os.rename(root + txt, folder + '/' + txt)
+#     # print(root + txt, folder + '/' + txt)
+#     # break 
