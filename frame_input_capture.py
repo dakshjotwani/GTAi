@@ -56,13 +56,9 @@ class FrameInputCapture:
 
     def cheat_code(self, code):
         keyboard = Controller()
-        keyboard.press('~')
-        keyboard.release('~')
         for n in code:
             keyboard.press(n)
             keyboard.release(n)
-        keyboard.press('\n')
-        keyboard.release('\n')
 
     
     def flush_buffer(self):

@@ -1,5 +1,7 @@
+import torch
 import torch.utils.data as data
 from torchvision.datasets.folder import default_loader
+from torchvision import transforms
 
 from PIL import Image
 import glob
@@ -9,7 +11,7 @@ import os.path
 import sys
 
 class gta5Loader(data.Dataset):
-    def __init__(self, root, transform=None, target_transform=None):
+    def __init__(self, root):
         self.root = root
         self.loader = default_loader
 
@@ -23,10 +25,11 @@ class gta5Loader(data.Dataset):
         for filename in glob.glob(self.root + '*.jpg'):
             self.images.append((filename, labels[filename[len(self.root):]]))
 
-        self.transform = transform
-        self.target_transform = target_transform
+        self.transform = transforms.ToTensor()
+        self.target_transform = None
 
     def __getitem__(self, index):
+        #print(index)
         """
         Args:
             index (int): Index
@@ -34,14 +37,26 @@ class gta5Loader(data.Dataset):
         Returns:
             tuple: (sample, target) where target is class_index of the target class.
         """
-        path, target = self.images[index]
-        sample = self.loader(path)
-        if self.transform is not None:
-            sample = self.transform(sample)
-        if self.target_transform is not None:
-            target = self.target_transform(target)
-
-        return sample, target
+        if isinstance(index, int):
+            path, target = self.images[index]
+            sample = self.loader(path)
+            if self.transform is not None:
+                sample = self.transform(sample)
+            if self.target_transform is not None:
+                target = self.target_transform(target)
+            return sample, target
+        elif isinstance(index, list):
+            samples, targets = [], []
+            for i in index:
+                path, target = self.images[i]
+                sample = self.loader(path)
+                if self.transform is not None:
+                    sample = self.transform(sample)
+                if self.target_transform is not None:
+                    target = self.target_transform(target)
+                samples.append(sample.unsqueeze(0))
+                targets.append(target)
+            return torch.cat(samples).squeeze(0), torch.tensor(targets)
 
 
     def __len__(self):
@@ -56,3 +71,18 @@ class gta5Loader(data.Dataset):
         tmp = '    Target Transforms (if any): '
         fmt_str += '{0}{1}'.format(tmp, self.target_transform.__repr__().replace('\n', '\n' + ' ' * len(tmp)))
         return fmt_str
+
+# import os
+# root = './gta5train/'
+# root = './tmp/'
+# for n in glob.glob(root + '*.txt'):
+#     name = n[len(root):][:-4]
+#     print(name)
+#     folder = root + name
+#     os.mkdir(root + name)
+#     for jpg in glob.glob(root + '*.jpg'):
+#         print(jpg, folder + '/' + jpg[len(root):])
+#         # os.rename(jpg, folder + '/' + jpg[len(root):])
+#     # os.rename(n, folder + '/' + n[len(root):])
+#     print(n, folder + '/' + n[len(root):])
+#     break

@@ -1,7 +1,7 @@
 # Byte-compiled / optimized / DLL files
 __pycache__/
-gta5train/
-tmp*/
+datasets/
+models/
 *.py[cod]
 *$py.class
 *.pt

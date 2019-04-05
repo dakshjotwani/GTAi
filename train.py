@@ -1,148 +1,128 @@
 import torch
-from torch import nn
-from torch.optim import Adam, SGD
-import torchvision
-from torchvision import models
-from torchvision import transforms
-from torchvision import datasets
-
-import numpy as np
-import matplotlib.pyplot as plt
-import math
 import time
-import datetime
-import cv2
-import os
+from torch import nn
+import numpy as np
 
+import torchvision
+import torchvision.models as models
 from gta5Loader import gta5Loader
+from torch.optim import Adam
 
-class Alexnet(nn.Module):
-    def __init__(self):
-        super(Alexnet, self).__init__()
+from conv_nets import MobileNetV2
+from first_train import Alexnet
 
-        self.batch_size = 32
-        self.learning_rate = 0.0001
+def train(device, model, epochs, lr, filename='model'):
+    learning_rate = lr
+    max_epoch = epochs
+    batch_size = 32
+    val_batch_size = 32
 
-        train = gta5Loader('./gta5train/', transform=transforms.ToTensor())
-        self.train_loader = torch.utils.data.DataLoader(train, batch_size=self.batch_size, shuffle=True)
+    # Set data loader
+    dataset = gta5Loader('./datasets/gta5train/')
+    train_loader = torch.utils.data.DataLoader(dataset, batch_size=batch_size, shuffle=True)
+    dataset2 = gta5Loader('./datasets/gta5val/')
+    val_loader = torch.utils.data.DataLoader(dataset2, batch_size=val_batch_size, shuffle=True)
 
-        self.features = nn.Sequential(
-            nn.Conv2d(3, 64, kernel_size=11, stride=4, padding=2),
-            nn.ReLU(inplace=True),
-            nn.MaxPool2d(kernel_size=3, stride=2),
-            nn.Conv2d(64, 192, kernel_size=5, padding=2),
-            nn.ReLU(inplace=True),
-            nn.MaxPool2d(kernel_size=3, stride=2),
-            nn.Conv2d(192, 384, kernel_size=3, padding=1),
-            nn.ReLU(inplace=True),
-            nn.Conv2d(384, 256, kernel_size=3, padding=1),
-            nn.ReLU(inplace=True),
-            nn.Conv2d(256, 256, kernel_size=3, padding=1),
-            nn.ReLU(inplace=True),
-            nn.MaxPool2d(kernel_size=3, stride=2),
-        )
-        self.avgpool = nn.AdaptiveAvgPool2d((6, 6))
-        self.classifier = nn.Sequential(
-            nn.Dropout(),
-            nn.Linear(256 * 6 * 6, 4096),
-            nn.Tanh(),
-            nn.Dropout(),
-            nn.Linear(4096, 4096),
-            nn.Tanh(),
-            nn.Linear(4096, 3),
-            nn.Tanh(),
-        )
-        self.loss = nn.SmoothL1Loss()
-        self.optimizer = Adam(self.parameters(), lr = self.learning_rate)
+    mini_batches_per_print = len(train_loader)//100
+    mini_batches_per_print = max(mini_batches_per_print, 1)
+    mini_batches_per_val = len(train_loader)//3
+    mini_batches_per_val = max(mini_batches_per_val, 1)
 
+    start_time = time.time()
+    current_epoch = 1
+    best_val_loss = float('inf')
+    stopping_criteria = False
+    loss_list = []
+    val_losses = []
 
-    def forward(self, x):
-        x = self.features(x)
-        x = self.avgpool(x)
-        x = x.view(x.size(0), 256 * 6 * 6)
-        x = self.classifier(x)
-        return x
+    loss_fn = nn.SmoothL1Loss()
+    optimizer = Adam(model.parameters(), lr = learning_rate)
 
-
-    def train(self, device):
-        # variables to change
-        stopping_epoch = 100
-        stopping_val_acc = 1.00
-        mini_batches_per_print = len(self.train_loader)//100
-        mini_batches_per_val = len(self.train_loader)//10
-
-        start_time = time.time()
-        epochs = 0
-        best_val_acc = 0
-        stopping_criteria = False
-        loss_list = []
-        val_accs = []
-        while epochs < stopping_epoch and not stopping_criteria:
-            print('new epoch')
-            correct = 0
-            correct_current_print = 0
-            total = 0
-            total_current_print = 0
-            current_loss = []
-            
-            for i, n in enumerate(self.train_loader):
-                # forward pass
-                prediction = self.forward(n[0].to(device))
-                # calculate loss and backprop
-                target = torch.stack([torch.DoubleTensor(n[1][0]), torch.DoubleTensor(n[1][1]), torch.DoubleTensor(n[1][2])])
-                target = target.transpose(0, 1).float()
-                # print(prediction)
-                # print(target)
-                loss = self.loss(prediction, target.to(device))
-                current_loss.append(loss.item())
-                self.optimizer.zero_grad()
-                loss.backward()
-                self.optimizer.step()
-                
-                # print
-                if (i+1)%(mini_batches_per_print) == 0 and i != 0:
-                    print(f'epoch {epochs:d} ({100*i/len(self.train_loader):.0f}%) | batch {i:d} ({i*self.batch_size:d})' +
-                    f' | loss {loss.item():.2f} | time {time.time()-start_time:.1f}s')
-                    loss_list.append(np.average(current_loss))
-                    current_loss = []
-                    print(prediction[0], target[0])
-                    print(prediction[1], target[1])
-                    print(prediction[2], target[2])
-                
-            torch.save(self.state_dict(), './saved.pt')
-            epochs += 1
-        print('training time: ', time.time()-start_time)
-        plt.plot([x*self.batch_size*mini_batches_per_print for x in range(len(loss_list))], loss_list)
-        plt.xlabel('# of training samples')
-        plt.ylabel('Cross Entropy Loss')
-        plt.title('Cross entropy loss vs number of training samples')
-        plt.show()
-
-        plt.plot([x*self.batch_size*mini_batches_per_val for x in range(len(val_accs))], val_accs)
-        plt.xlabel('# of training samples')
-        plt.ylabel('Validation accuracy')
-        plt.title('Validation accuracy vs number of training samples')
-        plt.show()
-    
-    def val(self, device):
-        return 0
-        correct = 0
-        total = 0
+    while current_epoch <= max_epoch and not stopping_criteria:
+        print('new epoch')
+        current_loss = []
         
-        for i, n in enumerate(self.val_loader):
-            if (i/len(self.val_loader)) > 0.33:
-                break
+        for i, n in enumerate(train_loader):
+            optimizer.zero_grad()
+
+            # forward pass
+            prediction = model(n[0].to(device))
+            # calculate loss and backprop
+            target = torch.stack([torch.DoubleTensor(n[1][0]), torch.DoubleTensor(n[1][1]), torch.DoubleTensor(n[1][2])])
+            target = target.transpose(0, 1).float()
+
+            # print(prediction)
+            # print(target)
+
+            # compute loss, append to loss list for print output
+            loss = loss_fn(prediction, target.to(device))
+            current_loss.append(loss.item())
+
+            loss.backward()
+            optimizer.step()
+            optimizer.zero_grad()
             
-            prediction = self.forward(n[0].to(device))
-            _, prediction_num = prediction.max(1)
-            correct += torch.sum(prediction_num == n[1].to(device)).item()
-            total += self.batch_size
-        return correct/total
+            # print
+            if (i+1)%(mini_batches_per_print) == 0:
+                print(f'epoch {current_epoch:d} ({100*i/len(train_loader):.0f}%) | batch {i:d} ({i*batch_size:d})' +
+                f' | loss {loss.item():.2f} | time {time.time()-start_time:.1f}s', end='')
+                loss_list.append(np.average(current_loss))
+                current_loss = []
+                print(' |', get_control_str(prediction[0]), '|', get_control_str(target[0]))
+
+            if (i+1)%(mini_batches_per_val) == 0:
+                val_loss = val(device, val_loader, model, loss_fn)
+                val_losses.append(val_loss)
+                print('val: ', val_loss)
+                if val_loss < best_val_loss:
+                    best_val_loss = val_loss
+                    torch.save(model.state_dict(), './models/' + str(filename) + '.pt')
+                    print('SAVED!')
+        current_epoch += 1
+        torch.save(model.state_dict(), './models/' + str(filename) + '-epochs.pt')
+
+def val(device, dataloader, model, loss_fn):
+    losses = []
+    model.eval()
+    with torch.no_grad():
+        for i, n in enumerate(dataloader):
+            # forward pass
+            prediction = model(n[0].to(device))
+            # calculate loss and backprop
+            target = torch.stack([torch.DoubleTensor(n[1][0]), torch.DoubleTensor(n[1][1]), torch.DoubleTensor(n[1][2])])
+            target = target.transpose(0, 1).float()
+            loss = loss_fn(prediction, target.to(device))
+            losses.append(loss.item())
+    model.train()
+    return np.mean(losses)
+
+def get_control_str(controls):
+    result = ''
+    if controls[0] < -0.1:
+        result += 'left'
+    elif controls[0] > 0.1:
+        result += 'right'
+    else:
+        result += 'str8'
+    result += '|'
+    if controls[1] > -0.5:
+        result += 'yes'
+    else:
+        result += 'no'
+    result += '|'
+    if controls[2] > -0.5:
+        result += 'yes'
+    else:
+        result += 'no'
+    return result
+
+def main():
+    device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+    model = Alexnet()
+    name = 'alexnet'
+    model.load_state_dict(torch.load('./models/' + name + '.pt'))
+    model.to(device)
+    train(device, model, filename=name, epochs=10, lr=0.0001)
 
 if __name__ == "__main__":
-    a = Alexnet()
-    device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
-    print('device:', device)
-    a = a.to(device)
-    a.train(device)
-    
+    main()
