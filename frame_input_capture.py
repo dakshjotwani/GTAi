@@ -1,5 +1,5 @@
 import time
-
+import os
 import cv2
 from mss.windows import MSS as mss
 import pygame
@@ -63,20 +63,21 @@ class FrameInputCapture:
     
     def flush_buffer(self):
         cur_time = datetime.datetime.today().strftime('%Y-%m-%d--%H-%M-%S')
+        folder = './datasets/newdata/' + cur_time + '/'
+        os.mkdir(folder)
         control_labels = ''
         for i, n in enumerate(self.frames[:-self.fraps*2]): #remove last two seconds
             filename = cur_time + '--' + str(i) + '.jpg'
-            cv2.imwrite('./gta5train/' + filename, n[0])
+            cv2.imwrite(folder + filename, n[0])
             control_labels += filename + '\t' + '\t'.join(map(str, n[1])) + '\n'
         
-        with open('./gta5train/' + cur_time + '.txt', 'w') as f:
+        with open(folder + cur_time + '.txt', 'w') as f:
             f.write(control_labels)
 
         self.frames = []
         print("Flushed", cur_time)
 
     def screen_record(self, debug=False):
-        # pygame init bs
         pygame.init()
         # Initialize controller
         ctlr = pygame.joystick.Joystick(1)
