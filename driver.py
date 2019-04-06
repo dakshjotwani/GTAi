@@ -37,7 +37,7 @@ class Driver:
             keyboard.release(n)
         self.cheatcodedelay = time.time()
 
-    def drive(self):
+    def drive(self, device):
         self.model.eval()
         mon = {"top": 32, "left": 0, "width": 800, "height": 600}
         sct = mss()
@@ -67,7 +67,7 @@ class Driver:
                 img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
                 img = self.transform(img)
 
-                out = self.model(img.view(1, *img.shape))[0]
+                out = self.model(img.view(1, *img.shape).to(device))[0]
                 print(out)
                 out = (out + 1) * 0x4000
                 
@@ -75,9 +75,10 @@ class Driver:
                     self.ctlr.set_axis(ax, int(out[i].item()))
 
 if __name__ == "__main__":
-    # alex = conv_nets.MobileNetV2(num_classes=3)
-    # alex.load_state_dict(torch.load('./models/mobilenetv2.pt'))
-    alex = Alexnet()
-    alex.load_state_dict(torch.load('./models/alexnet.pt'))
+    device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+    print(device)
+    alex = conv_nets.MobileNetV2(num_classes=3)
+    alex.load_state_dict(torch.load('./models/mobilenetv2.pt'))
+    alex.to(device)
     juan = Driver(alex)
-    juan.drive()
+    juan.drive(device)

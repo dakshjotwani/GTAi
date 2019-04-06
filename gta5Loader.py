@@ -26,6 +26,11 @@ class gta5Loader(data.Dataset):
             self.images.append((filename, labels[filename[len(self.root):]]))
 
         self.transform = transforms.ToTensor()
+        img_transform = transforms.Compose([
+            transforms.ToTensor(),
+            transforms.Normalize(mean=[102.9801, 115.9465, 122.7717], std=[1., 1., 1.])
+            ])
+        # self.transform = img_transform
         self.target_transform = None
 
     def __getitem__(self, index):

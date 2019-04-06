@@ -4,7 +4,7 @@ from torch import nn
 class LatentLSTM(nn.Module):
     def __init__(self):
         super(LatentLSTM, self).__init__()
-        self.lstm = nn.LSTM(256 * 6 * 6, 512, 1, batch_first=True)
+        self.lstm = nn.LSTM(256 * 6 * 6, 512, 2, batch_first=True)
         self.linear = nn.Linear(512, 3)
         self.tanh = nn.Tanh()
         
