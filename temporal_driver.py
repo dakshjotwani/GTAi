@@ -52,6 +52,7 @@ class TemporalDriver:
                 hidden = None
                 print('You have arrived!')
             if keyboard.is_pressed('`'):
+                time.sleep(0.5)
                 self.cheat_code('RAPIDGT\n')
 
             if self.driving:
@@ -72,14 +73,15 @@ class TemporalDriver:
                     self.ctlr.set_axis(ax, int(out[i].item()))
 
                 proc_time = time.time() - start
-                wait_time = 1/10 - proc_time
+                wait_time = 1/21 - proc_time
                 time.sleep(wait_time if wait_time > 0 else 0)
+                #print(1 / (time.time() - start))
 
 if __name__ == "__main__":
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
     print(device)
     model = AlexLSTM()
-    name = 'alexlstm_3'
+    name = 'ConvLSTM'
     model.load_state_dict(torch.load('./models/' + name + '.pt'))
     model.to(device)
     juan = TemporalDriver(model)

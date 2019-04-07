@@ -7,6 +7,7 @@ from train import Alexnet
 from resnet import ResNet
 from nvidia_net import NvidiaNet
 from conv_nets import MobileNetV2
+from test_lstm.GTA_resnet import GTAResNet
 from torchvision import transforms
 
 import keyboard
@@ -16,7 +17,7 @@ import time
 import conv_nets
 from train import get_control_str
 
-axis = [pyvjoy.HID_USAGE_X, pyvjoy.HID_USAGE_Y, pyvjoy.HID_USAGE_Z]
+axis = [pyvjoy.HID_USAGE_X] #, pyvjoy.HID_USAGE_Y, pyvjoy.HID_USAGE_Z]
 
 class Driver:
     def __init__(self, model, vJoyID=1):
@@ -43,8 +44,8 @@ class Driver:
         sct = mss()
 
         self.ctlr.set_axis(axis[0], 0x4000)
-        self.ctlr.set_axis(axis[1], 0x0000)
-        self.ctlr.set_axis(axis[2], 0x0000)
+        # self.ctlr.set_axis(axis[1], 0x0000)
+        # self.ctlr.set_axis(axis[2], 0x0000)
         while True:
 
             if keyboard.is_pressed('q'):
@@ -55,8 +56,8 @@ class Driver:
             if keyboard.is_pressed('o') and self.driving:
                 self.driving = False
                 self.ctlr.set_axis(axis[0], 0x4000)
-                self.ctlr.set_axis(axis[1], 0x0000)
-                self.ctlr.set_axis(axis[2], 0x0000)
+                # self.ctlr.set_axis(axis[1], 0x0000)
+                # self.ctlr.set_axis(axis[2], 0x0000)
                 print('You have arrived!')
             if keyboard.is_pressed('`'):
                 self.cheat_code('RAPIDGT\n')
@@ -77,8 +78,8 @@ class Driver:
 if __name__ == "__main__":
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
     print(device)
-    alex = conv_nets.MobileNetV2(num_classes=3)
-    alex.load_state_dict(torch.load('./models/mobilenetv2.pt'))
+    alex = GTAResNet() #conv_nets.MobileNetV2(num_classes=3)
+    alex.load_state_dict(torch.load('./models/GTAResNet.pt'))
     alex.to(device)
     juan = Driver(alex)
     juan.drive(device)

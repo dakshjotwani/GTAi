@@ -5,7 +5,8 @@ import time
 from torch.optim import Adam
 
 from GTA_resnet import GTAResNet
-from GTA_data import GTADataset
+from GTA_data import GTADataset, GTASequenceDataset, SequenceSampler
+from alex_lstm import AlexLSTM
 
 def val(device, dataloader, model, loss_fn):
     losses = []
@@ -78,7 +79,7 @@ def train(model, loss_fn, optimizer, epochs, train_loader, val_loader,
         current_epoch += 1
         torch.save(model.state_dict(), model_save_dir + model_name + '-epochs.pt')
 
-if __name__ == "__main__":
+def train_GTAResNet():
     # Train params
     model = GTAResNet()
     loss_fn = nn.SmoothL1Loss()
@@ -108,3 +109,41 @@ if __name__ == "__main__":
           model_name=model_name,
           model_save_dir=save_dir,
           device=device)
+
+def train_ConvLSTM():
+    # Train params
+    model = AlexLSTM(train_conv=False)
+    model.load_conv('./models/GTAResNet.pt')
+    loss_fn = nn.SmoothL1Loss()
+    optimizer = Adam(model.parameters(), lr=0.0001)
+    epochs = 10
+    model_name = 'ConvLSTM'
+    save_dir = './models/'
+    device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+
+    # Initialize data loaders
+    batch_size = 12
+    seq_len = 16
+    val_batch_size = 8
+    val_seq_len = 16
+
+    # Set data loader
+    train_dataset = GTASequenceDataset('./datasets/gta5train/', seq_len)
+    train_loader = torch.utils.data.DataLoader(train_dataset,
+        batch_size=batch_size,
+        sampler=SequenceSampler(train_dataset.end_len, seq_len))
+
+    val_dataset = GTASequenceDataset('./datasets/gta5val/', val_seq_len)
+    val_loader = torch.utils.data.DataLoader(val_dataset,
+        batch_size=val_batch_size,
+        sampler=SequenceSampler(val_dataset.end_len, val_seq_len))
+    
+    # Train model
+    model.to(device)
+    train(model, loss_fn, optimizer, epochs, train_loader, val_loader,
+          model_name=model_name,
+          model_save_dir=save_dir,
+          device=device)
+
+if __name__ == '__main__':
+    train_ConvLSTM()
