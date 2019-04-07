@@ -27,6 +27,34 @@ class SequenceSampler(torch.utils.data.Sampler):
     def __len__(self):
         return len(self.indices)
 
+class GTADataset(Dataset):
+    def __init__(self, root, steer_only=False):
+        self.root = root
+        self.loader = default_loader
+        self.transform = transforms.ToTensor()
+
+        self.images = []
+        for filename in glob.glob(self.root + '*/*.txt'):
+            curr_dir = filename.replace('\\', '/')
+            curr_dir = curr_dir[0:curr_dir.rfind('/') + 1]
+            with open(filename) as f:
+                for line in f.readlines():
+                    split_line = line[:-1].split('\t')
+                    sample_path = split_line[0]
+                    if steer_only:
+                        target = torch.tensor([float(split_line[1])])
+                    else:
+                        target = torch.Tensor([float(x) for x in split_line[1:]])
+                    self.images.append((curr_dir + sample_path, target))
+    
+    def __getitem__(self, index):
+        img_path, target = self.images[index]
+        img = self.transform(self.loader(img_path))
+        return img, target
+    
+    def __len__(self):
+        return len(self.images)
+
 class GTASequenceDataset(Dataset):
     def __init__(self, root, seq_length):
         self.root = root
@@ -36,13 +64,15 @@ class GTASequenceDataset(Dataset):
         self.end_len = []
 
         self.images = []
-        for filename in glob.glob(self.root + '*.txt'):
+        for filename in glob.glob(self.root + '*/*.txt'):
+            curr_dir = filename.replace('\\', '/')
+            curr_dir = curr_dir[0:curr_dir.rfind('/') + 1]
             with open(filename) as f:
                 for line in f.readlines():
                     split_line = line[:-1].split('\t')
                     sample_path = split_line[0]
                     target = torch.Tensor([float(x) for x in split_line[1:]])
-                    self.images.append((root + sample_path, target))
+                    self.images.append((curr_dir + sample_path, target))
 
             self.end_len.append(len(self.images))
 

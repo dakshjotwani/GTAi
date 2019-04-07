@@ -1,22 +1,17 @@
+import time
 import cv2
 import torch
 import pyvjoy
-from mss.windows import MSS as mss
 import numpy as np
-from train import Alexnet
-from resnet import ResNet
-from nvidia_net import NvidiaNet
-from conv_nets import MobileNetV2
-from torchvision import transforms
-
 import keyboard
+
+from torchvision import transforms
+from mss.windows import MSS as mss
 from pynput.keyboard import Key, Controller
-import time
 
-import conv_nets
-from train import get_control_str
+from models import GTAResNet
 
-axis = [pyvjoy.HID_USAGE_X, pyvjoy.HID_USAGE_Y, pyvjoy.HID_USAGE_Z]
+axis = [pyvjoy.HID_USAGE_X] #, pyvjoy.HID_USAGE_Y, pyvjoy.HID_USAGE_Z]
 
 class Driver:
     def __init__(self, model, vJoyID=1):
@@ -37,14 +32,14 @@ class Driver:
             keyboard.release(n)
         self.cheatcodedelay = time.time()
 
-    def drive(self):
+    def drive(self, device):
         self.model.eval()
         mon = {"top": 32, "left": 0, "width": 800, "height": 600}
         sct = mss()
 
         self.ctlr.set_axis(axis[0], 0x4000)
-        self.ctlr.set_axis(axis[1], 0x0000)
-        self.ctlr.set_axis(axis[2], 0x0000)
+        # self.ctlr.set_axis(axis[1], 0x0000)
+        # self.ctlr.set_axis(axis[2], 0x0000)
         while True:
 
             if keyboard.is_pressed('q'):
@@ -55,8 +50,8 @@ class Driver:
             if keyboard.is_pressed('o') and self.driving:
                 self.driving = False
                 self.ctlr.set_axis(axis[0], 0x4000)
-                self.ctlr.set_axis(axis[1], 0x0000)
-                self.ctlr.set_axis(axis[2], 0x0000)
+                # self.ctlr.set_axis(axis[1], 0x0000)
+                # self.ctlr.set_axis(axis[2], 0x0000)
                 print('You have arrived!')
             if keyboard.is_pressed('`'):
                 self.cheat_code('RAPIDGT\n')
@@ -67,7 +62,7 @@ class Driver:
                 img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
                 img = self.transform(img)
 
-                out = self.model(img.view(1, *img.shape))[0]
+                out = self.model(img.view(1, *img.shape).to(device))[0]
                 print(out)
                 out = (out + 1) * 0x4000
                 
@@ -75,9 +70,10 @@ class Driver:
                     self.ctlr.set_axis(ax, int(out[i].item()))
 
 if __name__ == "__main__":
-    # alex = conv_nets.MobileNetV2(num_classes=3)
-    # alex.load_state_dict(torch.load('./models/mobilenetv2.pt'))
-    alex = Alexnet()
-    alex.load_state_dict(torch.load('./models/alexnet.pt'))
+    device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+    print(device)
+    alex = GTAResNet()
+    alex.load_state_dict(torch.load('../models/GTAResNet.pt'))
+    alex.to(device)
     juan = Driver(alex)
-    juan.drive()
+    juan.drive(device)

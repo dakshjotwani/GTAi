@@ -1,12 +1,14 @@
 import time
 import os
 import cv2
-from mss.windows import MSS as mss
+
 import pygame
 import numpy as np
 import datetime
 import keyboard
+
 from pynput.keyboard import Key, Controller
+from mss.windows import MSS as mss
 
 font = cv2.FONT_HERSHEY_COMPLEX
 fontScale = 1
@@ -59,11 +61,10 @@ class FrameInputCapture:
         for n in code:
             keyboard.press(n)
             keyboard.release(n)
-
     
     def flush_buffer(self):
         cur_time = datetime.datetime.today().strftime('%Y-%m-%d--%H-%M-%S')
-        folder = './datasets/newdata/' + cur_time + '/'
+        folder = '../datasets/newdata/' + cur_time + '/'
         os.mkdir(folder)
         control_labels = ''
         for i, n in enumerate(self.frames[:-self.fraps*2]): #remove last two seconds
