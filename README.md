@@ -6,6 +6,8 @@ A deep learning solution to a self driving car in GTA V. Currently, we use ResNe
 
 * April 23, 2019: First [video](https://youtu.be/G2as7jAU4LM) of GTAi working relatively well.
 
+<iframe width="560" height="315" src="https://www.youtube.com/embed/G2as7jAU4LM" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+
 ## Requirements
 
 1. Windows 10. Since we needed windows to collect data from GTA V, we decided to do all our training and testing on Windows. We tried our best to keep most of the code platform agnostic, but we cannot guarantee that it works on other operating systems.
