@@ -11,7 +11,7 @@ from pynput.keyboard import Key, Controller
 
 from models import GTAResNet
 
-axis = [pyvjoy.HID_USAGE_X] #, pyvjoy.HID_USAGE_Y, pyvjoy.HID_USAGE_Z]
+axis = [pyvjoy.HID_USAGE_X, pyvjoy.HID_USAGE_Y, pyvjoy.HID_USAGE_Z]
 
 class Driver:
     def __init__(self, model, vJoyID=1):
@@ -38,9 +38,10 @@ class Driver:
         sct = mss()
 
         self.ctlr.set_axis(axis[0], 0x4000)
-        # self.ctlr.set_axis(axis[1], 0x0000)
-        # self.ctlr.set_axis(axis[2], 0x0000)
+        self.ctlr.set_axis(axis[1], 0x0000)
+        self.ctlr.set_axis(axis[2], 0x0000)
         while True:
+            start = time.time()
 
             if keyboard.is_pressed('q'):
                 exit()
@@ -50,8 +51,8 @@ class Driver:
             if keyboard.is_pressed('o') and self.driving:
                 self.driving = False
                 self.ctlr.set_axis(axis[0], 0x4000)
-                # self.ctlr.set_axis(axis[1], 0x0000)
-                # self.ctlr.set_axis(axis[2], 0x0000)
+                self.ctlr.set_axis(axis[1], 0x0000)
+                self.ctlr.set_axis(axis[2], 0x0000)
                 print('You have arrived!')
             if keyboard.is_pressed('`'):
                 self.cheat_code('RAPIDGT\n')
@@ -68,12 +69,14 @@ class Driver:
                 
                 for i, ax in enumerate(axis):
                     self.ctlr.set_axis(ax, int(out[i].item()))
+                
+                #print(1 / (time.time() - start))
 
 if __name__ == "__main__":
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
     print(device)
     alex = GTAResNet()
-    alex.load_state_dict(torch.load('../models/GTAResNet.pt'))
+    alex.load_state_dict(torch.load('../models/FinalResNet50-2.pt'))
     alex.to(device)
     juan = Driver(alex)
     juan.drive(device)

@@ -4,7 +4,7 @@ import numpy as np
 import time
 from torch.optim import Adam
 
-from models import GTAResNet, AlexLSTM
+from models import GTAResNet, AlexLSTM, LatentLSTM
 from data import GTADataset, GTASequenceDataset, SequenceSampler
 
 def val(device, dataloader, model, loss_fn):
@@ -84,20 +84,20 @@ def train_GTAResNet():
     loss_fn = nn.SmoothL1Loss()
     optimizer = Adam(model.parameters(), lr=0.0001)
     epochs = 10
-    model_name = 'GTAResNet'
+    model_name = 'FinalResNet50-2'
     save_dir = '../models/'
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
     # Initialize data loaders
-    batch_size = 16
-    val_batch_size = 16
+    batch_size = 28
+    val_batch_size = 28
 
-    train_dataset = GTADataset('../datasets/gta5train/', steer_only=True)
+    train_dataset = GTADataset('../datasets/gta5train/', steer_only=False)
     train_loader = torch.utils.data.DataLoader(train_dataset,
                                                batch_size=batch_size,
                                                shuffle=True)
 
-    val_dataset = GTADataset('../datasets/gta5val/', steer_only=True)
+    val_dataset = GTADataset('../datasets/gta5val/', steer_only=False)
     val_loader = torch.utils.data.DataLoader(val_dataset,
                                              batch_size=val_batch_size,
                                              shuffle=True)
@@ -109,30 +109,30 @@ def train_GTAResNet():
           model_save_dir=save_dir,
           device=device)
 
-def train_ConvLSTM():
+def train_LatentLSTM():
     # Train params
-    model = AlexLSTM(train_conv=False)
-    model.load_conv('../models/GTAResNet.pt')
+    model = LatentLSTM()
     loss_fn = nn.SmoothL1Loss()
     optimizer = Adam(model.parameters(), lr=0.0001)
-    epochs = 10
-    model_name = 'ConvLSTM'
+    epochs = 6
+    model_name = 'FinalLSTM-2'
+    conv_name = 'FinalResNet50-2'
     save_dir = '../models/'
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
     # Initialize data loaders
-    batch_size = 12
-    seq_len = 16
-    val_batch_size = 8
-    val_seq_len = 16
+    batch_size = 16
+    seq_len = 128
+    val_batch_size = 32
+    val_seq_len = 128
 
     # Set data loader
-    train_dataset = GTASequenceDataset('../datasets/gta5train/', seq_len)
+    train_dataset = GTASequenceDataset('../datasets/gta5train/', conv_name, seq_len)
     train_loader = torch.utils.data.DataLoader(train_dataset,
         batch_size=batch_size,
         sampler=SequenceSampler(train_dataset.end_len, seq_len))
 
-    val_dataset = GTASequenceDataset('../datasets/gta5val/', val_seq_len)
+    val_dataset = GTASequenceDataset('../datasets/gta5val/', conv_name, val_seq_len)
     val_loader = torch.utils.data.DataLoader(val_dataset,
         batch_size=val_batch_size,
         sampler=SequenceSampler(val_dataset.end_len, val_seq_len))
@@ -145,5 +145,5 @@ def train_ConvLSTM():
           device=device)
 
 if __name__ == '__main__':
-    #train_ConvLSTM()
-    train_GTAResNet()
+    train_LatentLSTM()
+    #train_GTAResNet()

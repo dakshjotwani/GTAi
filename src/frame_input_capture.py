@@ -100,6 +100,10 @@ class FrameInputCapture:
             start = time.time()
             # Get frame
             img = np.asarray(sct.grab(mon))
+            pygame.event.pump()
+            turn = ctlr.get_axis(0)
+            gas = ctlr.get_axis(4)
+            brake = ctlr.get_axis(5)
 
             if keyboard.is_pressed('q') and not self.recording:
                 exit()
@@ -119,20 +123,19 @@ class FrameInputCapture:
             if keyboard.is_pressed('~'):
                 self.cheat_code('RAPIDGT')
 
-            pygame.event.pump()
-            turn = ctlr.get_axis(0)
-            gas = ctlr.get_axis(4)
-            brake = ctlr.get_axis(5)
 
-            # Data balancer: Only save interesting frames
-            if (turn > 0.2 or turn < -0.2) or (brake > -0.4):
-                self.save_to_buffer(img, np.array([turn, gas, brake], dtype=np.float16))
-                num_straight += 1
+
+            # # Data balancer: Only save interesting frames
+            # if -0.05 < gas < 0.85 or (turn > 0.2 or turn < -0.2) or (brake > -0.4):
+            #     self.save_to_buffer(img, np.array([turn, gas, brake], dtype=np.float16))
+            #     num_straight += 1
             
-            # and sometimes save straight frames
-            elif num_straight > 0:
-                self.save_to_buffer(img, np.array([turn, gas, brake], dtype=np.float16))
-                num_straight -= 3
+            # # and sometimes save straight frames
+            # elif num_straight > 0:
+            #     self.save_to_buffer(img, np.array([turn, gas, brake], dtype=np.float16))
+            #     num_straight -= 3
+            
+            self.save_to_buffer(img, np.array([turn, gas, brake], dtype=np.float16))
 
             # cv2 bs
             self.put_turn_text(img, turn)

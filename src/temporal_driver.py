@@ -65,24 +65,26 @@ class TemporalDriver:
                     out, hidden = self.model(img)
                 else:
                     out, hidden = self.model(img, hidden)
-                # print(out)
+                #print(out)
                 out = out.squeeze(0).squeeze(0)
-                print(out)
-                out = (out + 1) * 0x4000
+                #print(out)
+                out = (out + 1) * torch.Tensor([float(0x4000), float(0x3000), float(0x4000)]).to(device)
                 for i, ax in enumerate(axis):
                     self.ctlr.set_axis(ax, int(out[i].item()))
 
                 proc_time = time.time() - start
-                wait_time = 1/21 - proc_time
+                wait_time = 1/22 - proc_time
                 time.sleep(wait_time if wait_time > 0 else 0)
-                #print(1 / (time.time() - start))
+                print(1 / (time.time() - start))
 
 if __name__ == "__main__":
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
     print(device)
     model = AlexLSTM()
-    name = 'ConvLSTM'
-    model.load_state_dict(torch.load('../models/' + name + '.pt'))
+    #name = 'ConvLSTM'
+    #model.load_state_dict(torch.load('../models/' + name + '.pt'))
+    model.conv.load_state_dict(torch.load('../models/FinalResNet50-1.pt'))
+    model.lstm.load_state_dict(torch.load('../models/FinalLSTM-1.pt'))
     model.to(device)
     juan = TemporalDriver(model)
     juan.drive(device)
