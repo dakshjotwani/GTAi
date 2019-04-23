@@ -34,6 +34,7 @@ class GTADataset(Dataset):
         self.transform = transforms.ToTensor()
 
         self.images = []
+        steer_graph = [0] * 10
         for filename in glob.glob(self.root + '*/*.txt'):
             curr_dir = filename.replace('\\', '/')
             curr_dir = curr_dir[0:curr_dir.rfind('/') + 1]
@@ -43,9 +44,12 @@ class GTADataset(Dataset):
                     sample_path = split_line[0]
                     if steer_only:
                         target = torch.tensor([float(split_line[1])])
+                        steer_graph[int((target.item() + 1) * 4.99999)] += 1
                     else:
                         target = torch.Tensor([float(x) for x in split_line[1:]])
                     self.images.append((curr_dir + sample_path, target))
+        
+        print(steer_graph)
     
     def __getitem__(self, index):
         img_path, target = self.images[index]
@@ -56,36 +60,34 @@ class GTADataset(Dataset):
         return len(self.images)
 
 class GTASequenceDataset(Dataset):
-    def __init__(self, root, seq_length):
+    def __init__(self, root, conv_model_name, seq_length):
         self.root = root
         self.loader = default_loader
         self.transform = transforms.ToTensor()
         self.seq_length = seq_length
         self.end_len = []
+        self.curr_len = 0
 
-        self.images = []
-        for filename in glob.glob(self.root + '*/*.txt'):
-            curr_dir = filename.replace('\\', '/')
-            curr_dir = curr_dir[0:curr_dir.rfind('/') + 1]
-            with open(filename) as f:
-                for line in f.readlines():
-                    split_line = line[:-1].split('\t')
-                    sample_path = split_line[0]
-                    target = torch.Tensor([float(x) for x in split_line[1:]])
-                    self.images.append((curr_dir + sample_path, target))
+        self.embeds = []
+        self.targets = []
 
-            self.end_len.append(len(self.images))
+        for filename in glob.glob(self.root + '*/' + conv_model_name + '-embeds.pth'):
+            embed = torch.load(filename)
+            if embed.size(1) != 2048:
+                print(embed.size())
+            self.curr_len += embed.size(0)
+            self.end_len.append(self.curr_len)
+            self.embeds.append(embed)
+
+        for filename in glob.glob(self.root + '*/' + conv_model_name + '-targets.pth'):
+            targets = torch.load(filename)
+            self.targets.append(targets)
+        
+        self.embeds = torch.cat(self.embeds, dim=0)
+        self.targets = torch.cat(self.targets, dim=0)
 
     def __getitem__(self, index):
         start = index
-        end = index + self.seq_length
+        end = self.seq_length
 
-        images = []
-        targets = []
-        for i in range(start, end):
-            img_path, target = self.images[i]
-            img = self.transform(self.loader(img_path))
-            images.append(img)
-            targets.append(target)
-        
-        return torch.stack(images), torch.stack(targets) 
+        return self.embeds.narrow(0, start, end), self.targets.narrow(0, start, end)
