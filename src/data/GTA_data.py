@@ -28,28 +28,36 @@ class SequenceSampler(torch.utils.data.Sampler):
         return len(self.indices)
 
 class GTADataset(Dataset):
-    def __init__(self, root, steer_only=False):
+    def __init__(self, root, balance=True):
         self.root = root
         self.loader = default_loader
         self.transform = transforms.ToTensor()
 
         self.images = []
-        steer_graph = [0] * 10
+        
+        
+
         for filename in glob.glob(self.root + '*/*.txt'):
             curr_dir = filename.replace('\\', '/')
             curr_dir = curr_dir[0:curr_dir.rfind('/') + 1]
             with open(filename) as f:
+                num_straight = 10
                 for line in f.readlines():
                     split_line = line[:-1].split('\t')
                     sample_path = split_line[0]
-                    if steer_only:
-                        target = torch.tensor([float(split_line[1])])
-                        steer_graph[int((target.item() + 1) * 4.99999)] += 1
+                    target = torch.Tensor([float(x) for x in split_line[1:]])
+                    if balance:
+                        # turn = target[0], gas = target[1], break = target[2]
+                        if (target[0] > 0.2 or target[0] < -0.2) or (target[2] > -0.4):
+                            self.images.append((curr_dir + sample_path, target))
+                            num_straight += 1
+                        elif num_straight > 0:
+                            self.images.append((curr_dir + sample_path, target))
+                            num_straight -= 3
                     else:
-                        target = torch.Tensor([float(x) for x in split_line[1:]])
-                    self.images.append((curr_dir + sample_path, target))
+                        self.images.append((curr_dir + sample_path, target))
         
-        print(steer_graph)
+        print(len(self.images))
     
     def __getitem__(self, index):
         img_path, target = self.images[index]

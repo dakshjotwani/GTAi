@@ -31,7 +31,7 @@ class TemporalDriver:
         self.cheatcodedelay = time.time()
     
     def drive(self, device):
-        mon = {"top": 32, "left": 0, "width": 800, "height": 600}
+        mon = {"top": 32, "left": 0, "width": 1024, "height": 768}
         sct = mss()
 
         hidden = None

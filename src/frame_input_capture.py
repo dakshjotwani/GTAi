@@ -16,7 +16,7 @@ fontColor = (255, 255, 255)
 lineType = 2
 
 class FrameInputCapture:
-    def __init__(self, fraps=25):
+    def __init__(self, fraps=40):
         self.fraps = fraps
         self.frames = []
         self.recording = False
@@ -85,7 +85,7 @@ class FrameInputCapture:
         ctlr.init()
 
         # mss init bs
-        mon = {"top": 32, "left": 0, "width": 800, "height": 600}
+        mon = {"top": 32, "left": 0, "width": 1024, "height": 768}
         title = "Screen Capture"
         sct = mss()
 

@@ -76,7 +76,7 @@ if __name__ == "__main__":
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
     print(device)
     alex = GTAResNet()
-    alex.load_state_dict(torch.load('../models/FinalResNet50-2.pt'))
+    alex.load_state_dict(torch.load('../models/FinalResNet50-2-epochs.pt'))
     alex.to(device)
     juan = Driver(alex)
     juan.drive(device)
