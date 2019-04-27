@@ -37,3 +37,11 @@ $ python ./tmp.py                   # Create embeddings for all frames using tra
 $ python ./driver.py                # CNN only driver script
 $ python ./temporal_driver.py       # CNN + LSTM driver script (locked framerate)
 ``` 
+
+## Issues
+
+1. Need a good solution to balance data. Right now there is an 'okay' solution implemented to balance data for the CNN. Fixing this will probably result in better steering results. There is no solution yet to balance data for the LSTM. Because of this, the car does not brake well enough.
+
+2. Camera: Might not be an issue. Currently testing hood cam (Which I recently found hidden in the game settings). Need to collect more data for this
+
+3. Semantic segmentation: Might help
