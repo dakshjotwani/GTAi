@@ -20,11 +20,20 @@ A deep learning solution to a self driving car in GTA V. Currently, we use ResNe
 
 ## Usage
 
+Some strings and commented/uncommented lines will probably need to be changed to get the code to run.
+
+Create the following directories in the root directory of this project:
+
+1. ./models : This is where all models will be saved.
+2. ./datasets/newdata : This is where all data collected will be saved.
+
+Important scripts:
+
 ```bash
 $ cd src
 $ python ./frame_input_capture.py   # Data collection
 $ python ./train_net.py             # Train CNN or LSTM by editing main() code appropriately
-$ python ./tmp.py                   # Create embeddings for all frames using trained CNN
+$ python ./tmp.py                   # Create embeddings for all frames using trained CNN. This is needed to train the LSTM.
 $ python ./driver.py                # CNN only driver script
-$ python ./temporal_driver.py       # CNN + LSTM driver script
+$ python ./temporal_driver.py       # CNN + LSTM driver script (locked framerate)
 ``` 
