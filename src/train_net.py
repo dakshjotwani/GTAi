@@ -92,12 +92,12 @@ def train_GTAResNet():
     batch_size = 28
     val_batch_size = 28
 
-    train_dataset = GTADataset('../datasets/gta5train/', steer_only=False)
+    train_dataset = GTADataset('../datasets/hoodcam_train/')
     train_loader = torch.utils.data.DataLoader(train_dataset,
                                                batch_size=batch_size,
                                                shuffle=True)
 
-    val_dataset = GTADataset('../datasets/gta5val/', steer_only=False)
+    val_dataset = GTADataset('../datasets/hoodcam_val/', balance=False)
     val_loader = torch.utils.data.DataLoader(val_dataset,
                                              batch_size=val_batch_size,
                                              shuffle=True)
@@ -127,12 +127,12 @@ def train_LatentLSTM():
     val_seq_len = 128
 
     # Set data loader
-    train_dataset = GTASequenceDataset('../datasets/gta5train/', conv_name, seq_len)
+    train_dataset = GTASequenceDataset('../datasets/hoodcam_train/', conv_name, seq_len)
     train_loader = torch.utils.data.DataLoader(train_dataset,
         batch_size=batch_size,
         sampler=SequenceSampler(train_dataset.end_len, seq_len))
 
-    val_dataset = GTASequenceDataset('../datasets/gta5val/', conv_name, val_seq_len)
+    val_dataset = GTASequenceDataset('../datasets/hoodcam_val/', conv_name, val_seq_len)
     val_loader = torch.utils.data.DataLoader(val_dataset,
         batch_size=val_batch_size,
         sampler=SequenceSampler(val_dataset.end_len, val_seq_len))

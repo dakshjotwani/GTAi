@@ -6,12 +6,12 @@ model_name = 'FinalResNet50-2'
 model = GTAResNet()
 model.load_state_dict(torch.load('../models/FinalResNet50-2.pt'))
 batch_size = 128
-dset_path = '../datasets/gta5train/'
+dset_path = '../datasets/hoodcam_train/'
 device = torch.device('cuda:0')
 model.to(device)
 
 img_2_vec(model, model_name, batch_size, dset_path, device)
 
-dset_path = '../datasets/gta5val/'
+dset_path = '../datasets/hoodcam_val/'
 
 img_2_vec(model, model_name, batch_size, dset_path, device)

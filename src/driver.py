@@ -34,7 +34,7 @@ class Driver:
 
     def drive(self, device):
         self.model.eval()
-        mon = {"top": 32, "left": 0, "width": 800, "height": 600}
+        mon = {"top": 32, "left": 0, "width": 1024, "height": 768}
         sct = mss()
 
         self.ctlr.set_axis(axis[0], 0x4000)
@@ -76,7 +76,7 @@ if __name__ == "__main__":
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
     print(device)
     alex = GTAResNet()
-    alex.load_state_dict(torch.load('../models/FinalResNet50-2.pt'))
+    alex.load_state_dict(torch.load('../models/FinalResNet50-1.pt'))
     alex.to(device)
     juan = Driver(alex)
     juan.drive(device)
