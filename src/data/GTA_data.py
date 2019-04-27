@@ -34,8 +34,6 @@ class GTADataset(Dataset):
         self.transform = transforms.ToTensor()
 
         self.images = []
-        
-        
 
         for filename in glob.glob(self.root + '*/*.txt'):
             curr_dir = filename.replace('\\', '/')
@@ -56,8 +54,6 @@ class GTADataset(Dataset):
                             num_straight -= 3
                     else:
                         self.images.append((curr_dir + sample_path, target))
-        
-        print(len(self.images))
     
     def __getitem__(self, index):
         img_path, target = self.images[index]
@@ -68,7 +64,7 @@ class GTADataset(Dataset):
         return len(self.images)
 
 class GTASequenceDataset(Dataset):
-    def __init__(self, root, conv_model_name, seq_length):
+    def __init__(self, root, conv_model_name, seq_length, balance=False):
         self.root = root
         self.loader = default_loader
         self.transform = transforms.ToTensor()
@@ -90,6 +86,10 @@ class GTASequenceDataset(Dataset):
         for filename in glob.glob(self.root + '*/' + conv_model_name + '-targets.pth'):
             targets = torch.load(filename)
             self.targets.append(targets)
+
+        # TODO: Implement data balancer for sequences
+        if balance:
+            pass
         
         self.embeds = torch.cat(self.embeds, dim=0)
         self.targets = torch.cat(self.targets, dim=0)
