@@ -68,7 +68,7 @@ class TemporalDriver:
                 #print(out)
                 out = out.squeeze(0).squeeze(0)
                 #print(out)
-                out = (out + 1) * torch.Tensor([float(0x4000), float(0x3000), float(0x4000)]).to(device)
+                out = (out + 1) * torch.Tensor([float(0x4000), float(0x4000), float(0x4000)]).to(device)
                 for i, ax in enumerate(axis):
                     self.ctlr.set_axis(ax, int(out[i].item()))
 
@@ -83,8 +83,8 @@ if __name__ == "__main__":
     model = AlexLSTM()
     #name = 'ConvLSTM'
     #model.load_state_dict(torch.load('../models/' + name + '.pt'))
-    model.conv.load_state_dict(torch.load('../models/FinalResNet50-1.pt'))
-    model.lstm.load_state_dict(torch.load('../models/FinalLSTM-1.pt'))
+    model.conv.load_state_dict(torch.load('../models/FinalResNet50-2.pt'))
+    model.lstm.load_state_dict(torch.load('../models/FinalLSTM-2.pt'))
     model.to(device)
     juan = TemporalDriver(model)
     juan.drive(device)
