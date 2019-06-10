@@ -85,7 +85,7 @@ def train_GTAResNet():
     optimizer = Adam(model.parameters(), lr=0.0001)
     epochs = 10
     model_name = 'FinalResNet50-2'
-    save_dir = '../models/'
+    save_dir = '../saved_models/'
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
     # Initialize data loaders
@@ -117,7 +117,7 @@ def train_LatentLSTM():
     epochs = 6
     model_name = 'FinalLSTM-2'
     conv_name = 'FinalResNet50-2'
-    save_dir = '../models/'
+    save_dir = '../saved_models/'
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
     # Initialize data loaders
